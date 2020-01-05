@@ -1,0 +1,69 @@
+#load all packages
+library(readxl)
+library(forecast)
+library(matrixStats)
+library(rnn)
+library(tseries)
+library(anchors)
+library(readr)
+library(data.table)
+library(xlsx)
+options(scipen=999)
+
+#load in data
+GDPData <- as.data.frame(read_excel("ThesisData.xlsx", 
+                                    sheet = "QtrlyGDPData"))
+Names <- as.data.frame(read_excel("ThesisData.xlsx", 
+                                  sheet = "Names"))
+Sales <- as.data.frame(read_excel("ThesisData.xlsx", 
+                                  sheet = "Sales"))
+Growth <- as.data.frame(read_excel("ThesisData.xlsx", 
+                                   sheet = "Growth"))
+GM <- as.data.frame(read_excel("ThesisData.xlsx", 
+                               sheet = "Gross Margin"))
+OM <- as.data.frame(read_excel("ThesisData.xlsx", 
+                               sheet = "OM"))
+EarningsGrowth <- as.data.frame(read_excel("ThesisData.xlsx", 
+                                           sheet = "EarningGrowth"))
+SP500 <- as.data.frame(read_csv("constituents_csv.csv"))
+
+#add row names as tickers
+rownames(Sales) <- Sales[,1]
+rownames(Growth) <- Growth[,1]
+rownames(GM) <- GM[,1]
+rownames(OM) <- OM[,1]
+rownames(EarningsGrowth) <- EarningsGrowth[,1]
+
+#delete first five rows
+Sales <- Sales[, -1:-5]
+Growth <- Growth[, -1:-5]
+GM <- GM[, -1:-5]
+OM <- OM[, -1:-5]
+EarningsGrowth <- EarningsGrowth[, -1:-5]
+
+F2018 <- data.frame(rownames(Growth), row.names = rownames(Growth))
+F2018$Projected <- NA
+F2018 <- as.data.frame(F2018[,-1])
+rownames(F2018) <- rownames(Growth)
+colnames(F2018) <- "2018E"
+
+GMF2018 <- data.frame(rownames(GM), row.names = rownames(GM))
+GMF2018$Projected <- NA
+GMF2018 <- as.data.frame(GMF2018[,-1])
+rownames(GMF2018) <- rownames(GM)
+colnames(GMF2018) <- "2018E"
+
+OMF2018 <- data.frame(rownames(OM), row.names = rownames(OM))
+OMF2018$Projected <- NA
+OMF2018 <- as.data.frame(OMF2018[,-1])
+rownames(OMF2018) <- rownames(OM)
+colnames(OMF2018) <- "2018E"
+
+EarningsGrowthF2018 <- data.frame(rownames(EarningsGrowth), row.names = rownames(EarningsGrowth))
+EarningsGrowthF2018$Projected <- NA
+EarningsGrowthF2018 <- as.data.frame(EarningsGrowthF2018[,-1])
+rownames(EarningsGrowthF2018) <- rownames(EarningsGrowth)
+colnames(EarningsGrowthF2018) <- "2018E"
+
+SP500 <- subset(SP500, SP500$Symbol %in% rownames(Growth))
+SP500 <- unique(SP500)
