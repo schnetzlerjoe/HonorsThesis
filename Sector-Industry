@@ -1,0 +1,21 @@
+#for sector
+
+sectorgrowth <- as.data.frame(cbind(CompanyList,Growth))
+colnames(sectorgrowth) <- names(sectorgrowth)
+
+sectorgrowth <- subset(sectorgrowth, sectorgrowth$Sector == "Technology")
+
+y <- colMeans(na.omit(sectorgrowth[, 4:22]))
+x <- colnames(sectorgrowth[, 4:22])
+plot_ly(sectorgrowth, x = x, y = y, type = "bar")
+
+#for industry
+
+industrygrowth <- as.data.frame(cbind(CompanyList,Growth))
+colnames(industrygrowth) <- names(industrygrowth)
+
+industrygrowth <- subset(industrygrowth, industrygrowth$Industry == "Banks")
+
+y <- colMeans(na.omit(industrygrowth[, 4:22]))
+x <- colnames(industrygrowth[, 4:22])
+plot_ly(industrygrowth, x = x, y = y, type = "bar")
