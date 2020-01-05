@@ -1,0 +1,45 @@
+GrowthForecast2018 <- function(ticker) {
+
+#select security interested in
+data <- subset((Growth), rownames(Growth) == ticker)
+
+#add corresponding industry into data frame
+industry <- subset(Names, Names$Symbol == ticker)
+findindustry <- industry$Industry
+ind <- cbind(Growth, Names)
+industry <- subset(ind, ind$Industry == findindustry)
+data <- rbind(colMeans(na.omit(industry[,1:19])), data)
+rownames(data) <- c(findindustry, ticker)
+
+#add corresponding sector into data frame
+sector <- subset(Names, Names$Symbol == ticker)
+findsector <- sector$Sector
+sect <- cbind(Growth, Names)
+sector <- subset(sect, sect$Sector == findsector)
+data <- rbind(colMeans(na.omit(sector[,1:19])), data)
+rownames(data) <- c(findsector, findindustry, ticker)
+
+ifelse(length(which(!is.na(Growth[ticker,]))) > 5 & length(which(!is.na(Growth[ticker,15:19]))) >= 5,
+       
+{t <- rle(is.na(as.vector(unlist(Growth[ticker,]))))
+end <- 19
+start <- length(Growth[ticker,]) - last(t$lengths)
+ts <- ts(as.numeric(data[ticker,start:end]), start = (2000 + length(Growth[ticker,]) - last(t$lengths)), end = 2017, frequency = 1)
+
+center <- as.matrix(rowMeans(data[ticker,]))
+scale <- as.matrix(rowSds(as.matrix(data[ticker,])))
+
+model <- nnetar(na.omit(ts), scale.inputs = FALSE, repeats= 5000, maxit=200, p= 19)
+forecast2018 <- forecast(model, h = 1)
+forecast2018 <- as.numeric(forecast2018$mean)
+real2018 <- Growth[ticker,"2018"]
+forecast2018 - real2018
+1 - ((abs(forecast2018 - real2018))/real2018)
+F2018[ticker,1] <<- forecast2018 } ,
+F2018[ticker,1] <<- NA)
+
+return(
+  print("Complete") 
+  )
+
+}
