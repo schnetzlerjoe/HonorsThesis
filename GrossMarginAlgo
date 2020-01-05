@@ -1,0 +1,53 @@
+GMForecast2018 <- function(ticker) {
+  
+  #select security interested in
+  data <- subset((GM), rownames(GM) == ticker)
+  
+  #add corresponding industry into data frame
+  industry <- subset(Names, Names$Symbol == ticker)
+  findindustry <- industry$Industry
+  ind <- cbind(GM, Names)
+  industry <- subset(ind, ind$Industry == findindustry)
+  data <- rbind(colMeans((industry[,1:19]), na.rm = TRUE), data)
+  rownames(data) <- c(findindustry, ticker)
+  
+  #add corresponding sector into data frame
+  sector <- subset(Names, Names$Symbol == ticker)
+  findsector <- sector$Sector
+  sect <- cbind(GM, Names)
+  sector <- subset(sect, sect$Sector == findsector)
+  data <- rbind(colMeans((sector[,1:19]), na.rm = TRUE), data)
+  rownames(data) <- c(findsector, findindustry, ticker)
+  
+  #add sales growth to data
+  data <- rbind(Growth[ticker,], data)
+  rownames(data) <- c("SalesGrowth",findsector, findindustry, ticker)
+  
+  #replace missing data
+  k <- which(is.na(data), arr.ind=TRUE)
+  ifelse(length( which(is.na(data), arr.ind=TRUE)) > 0, data[k] <- rowMeans(data, na.rm=TRUE)[k[,1]], data <- data)
+  
+  ifelse(length(which(!is.na(GM[ticker,]))) > 5 & length(which(!is.na(GM[ticker,15:19]))) >= 5,
+         
+         {t <- rle(is.na(as.vector(unlist(GM[ticker,]))))
+         end <- 18
+         start <- length(GM[ticker,]) - last(t$lengths) + 2
+         ts <- ts(as.numeric(data[ticker,start:end]), start = (2000 + start - 1), end = 2017, frequency = 1)
+         
+         xreg <- as.matrix(t(data[1:3,start:(end + 1)]))
+         model <- nnetar(na.omit(ts), scale.inputs = FALSE, repeats= 10000, decay=0.10, maxit=150, p= (length(which(!is.na(GM[ticker,]))) - 1), xreg = na.omit(xreg[1:(last(t$lengths) - 2),]))
+         
+         forecast2018 <- forecast(model, h = 1, xreg = matrix(xreg[(last(t$lengths) - 1),], nrow = 1, ncol = 3, dimnames = list(2018,
+                                                                                                                                (c("SalesGrowth", findsector, findindustry)))))
+         forecast2018 <- as.numeric(forecast2018$mean)
+         real2018 <- GM[ticker,"2018"]
+         forecast2018 - real2018
+         1 - ((abs(forecast2018 - real2018))/real2018)
+         GMF2018[ticker,1] <<- forecast2018 } ,
+         GMF2018[ticker,1] <<- NA)
+  
+  return(
+    print(seq(SP500)) 
+  )
+  
+}
