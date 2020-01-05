@@ -1,0 +1,61 @@
+EarningsForecast2018 <- function(ticker) {
+  
+  #select security interested in
+  data <- subset((EarningsGrowth), rownames(EarningsGrowth) == ticker)
+  
+  #add corresponding industry into data frame
+  industry <- subset(Names, Names$Symbol == ticker)
+  findindustry <- industry$Industry
+  ind <- cbind(EarningsGrowth, Names)
+  industry <- subset(ind, ind$Industry == findindustry)
+  data <- rbind(colMeans((industry[,1:19]), na.rm = TRUE), data)
+  rownames(data) <- c(findindustry, ticker)
+  
+  #add corresponding sector into data frame
+  sector <- subset(Names, Names$Symbol == ticker)
+  findsector <- sector$Sector
+  sect <- cbind(EarningsGrowth, Names)
+  sector <- subset(sect, sect$Sector == findsector)
+  data <- rbind(colMeans((sector[,1:19]), na.rm = TRUE), data)
+  rownames(data) <- c(findsector, findindustry, ticker)
+  
+  #add sales growth to data
+  data <- rbind(Growth[ticker,], data)
+  rownames(data) <- c("SalesGrowth",findsector, findindustry, ticker)
+  
+  #add GM to data
+  data <- rbind(GM[ticker,], data)
+  rownames(data) <- c("Gross Margin","SalesGrowth",findsector, findindustry, ticker)
+  
+  #add OM to data
+  data <- rbind(OM[ticker,], data)
+  rownames(data) <- c("Operating Margin","Gross Margin","SalesGrowth",findsector, findindustry, ticker)
+  
+  #replace missing data
+  k <- which(is.na(data), arr.ind=TRUE)
+  ifelse(length( which(is.na(data), arr.ind=TRUE)) > 0, data[k] <- rowMeans(data, na.rm=TRUE)[k[,1]], data <- data)
+  
+  ifelse(length(which(!is.na(EarningsGrowth[ticker,]))) > 5 & length(which(!is.na(EarningsGrowth[ticker,15:19]))) >= 5 & length(which(!is.na(GM[ticker,15:19]))) >= 5 & length(which(!is.na(OM[ticker,15:19]))) >= 5,
+         
+         {t <- rle(is.na(as.vector(unlist(EarningsGrowth[ticker,]))))
+         end <- 18
+         start <- length(EarningsGrowth[ticker,]) - last(t$lengths) + 2
+         ts <- ts(as.numeric(data[ticker,start:end]), start = (2000 + start - 1), end = 2017, frequency = 1)
+         
+         xreg <- as.matrix(t(data[1:5,start:(end + 1)]))
+         model <- nnetar(na.omit(ts), scale.inputs = FALSE, repeats= 5000, maxit=150, p= 19)
+         
+         forecast2018 <- forecast(model, h = 1, xreg = matrix(xreg[(last(t$lengths) - 1),], nrow = 1, ncol = 5, dimnames = list(2018,
+                                                                                                                                (c("Operating Margin","Gross Margin","SalesGrowth", findsector, findindustry)))))
+         forecast2018 <- as.numeric(forecast2018$mean)
+         real2018 <- EarningsGrowth[ticker,"2018"]
+         forecast2018 - real2018
+         1 - ((abs(forecast2018 - real2018))/real2018)
+         EarningsGrowthF2018[ticker,1] <<- forecast2018 } ,
+         EarningsGrowthF2018[ticker,1] <<- NA)
+  
+  return(
+    print(seq(SP500)) 
+  )
+  
+}
